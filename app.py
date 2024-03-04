@@ -33,7 +33,7 @@ async def main(voicename: str, text: str, OUTPUT_FILE):
 
 def send_information(path, ws):
 
-        print('传输信息开始！')
+        print('데이터 전송 시작!')
         #path = video_list[0]
         ''''''
         with open(path, 'rb') as f:
@@ -52,28 +52,31 @@ def txt_to_audio(text_):
     audio_list = []
     audio_path = 'data/audio/aud_0.wav'
     voicename = "zh-CN-YunxiaNeural"
-    # 让我们一起学习。必应由 AI 提供支持，因此可能出现意外和错误。请确保核对事实，并 共享反馈以便我们可以学习和改进!
+    directory = os.path.dirname(audio_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    # 함께 배워봅시다. Bing은 AI에 의해 지원되므로 예기치 않은 오류가 발생할 수 있습니다. 사실을 확인하고 피드백을 공유해 주시면 우리가 배우고 개선하는 데 도움이 됩니다!
     text = text_
     asyncio.get_event_loop().run_until_complete(main(voicename,text,audio_path))
     audio_process(audio_path)
     
 @sockets.route('/dighuman')
 def echo_socket(ws):
-    # 获取WebSocket对象
+    # Websocket 객체 가져오기
     #ws = request.environ.get('wsgi.websocket')
-    # 如果没有获取到，返回错误信息
+    # 만약 가져오지 못했다면, 오류 메시지를 반환합니다.
     if not ws:
-        print('未建立连接！')
+        print('통신이 연결되지 않았습니다!')
         return 'Please use WebSocket'
     # 否则，循环接收和发送消息
     else:
-        print('建立连接！')
+        print('통신 연결됨.')
         while True:
             message = ws.receive()           
             
             if len(message)==0:
 
-                return '输入信息为空'
+                return '입력 정보가 비어 있습니다.'
             else:                                
                 txt_to_audio(message)                       
                 audio_path = 'data/audio/aud_0.wav'

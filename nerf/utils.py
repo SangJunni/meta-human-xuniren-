@@ -935,6 +935,7 @@ class Trainer(object):
         self.log(f"==> Start Test, save results to {save_path}")
 
         pbar = tqdm.tqdm(total=len(loader) * loader.batch_size, bar_format='{percentage:3.0f}% {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]')
+        video_stream.start()
         self.model.eval()
         video_stream.set_video_len(int(len(loader) * loader.batch_size))
         all_preds = []

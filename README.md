@@ -1,111 +1,64 @@
-# 虚拟人说话头生成(NeRF虚拟人实时驱动)--尽情打造自己的call annie吧
+# NeRF - 가상 인물 실시간 구동을 통한 가상 인물 말하기
+: **해당 레포지토리는 메타 휴먼 관련해서 Fay라는 메타휴먼 오픈소스 플랫폼에서 활용할 수 있도록 제작된 Xuniren을 쉽게 활용할 수 있도록 한국어로 작성한 레포지토리 입니다.**  
 ![](/img/example.gif)
 
-xuniren windows安装教程：[一步步教学在 Windows 下面安装 pytorch3d 来部署 xuniren 这个项目 - 坤坤 - 博客园 (cnblogs.com)](https://www.cnblogs.com/dm521/p/17469967.html)
+## 한국어 설치 가이드 범위
+: 해당 레포지토리는 Windows 설치 과정은 고려하지 않았으며 Ubuntu 환경 기반의 서버에서 활용할 수 있도록 각종 세팅을 제공하고자 합니다.   
+또한 작성 시점으로는 Fay를 통한 UI 기반 응용을 하지 않고 로컬 환경에서 추론하는 것만으로 고려하여 작성되었습니다.   
+따라서, Windows 환경이나 모델 학습을 원할 경우 아래 블로그 글(중국어)을 확인하여 진행하시기 바랍니다.(추후 업데이트 될 수 있음.)
 
-模型训练教程：[(278条消息) xuniren（Fay数字人开源社区项目）NeRF模型训练教程_郭泽斌之心的博客-CSDN博客](https://blog.csdn.net/aa84758481/article/details/131135823)
+xuniren windows 설치가이드：[Windows에서 PyTorch3D를 설치하여 Xuniren 프로젝트를 배포하는 단계별 과정 - 중국어 (cnblogs.com)](https://www.cnblogs.com/dm521/p/17469967.html)
 
+모델 훈련 튜토리얼：[Xuniren(Fay 디지털 인물 오픈소스 커뮤니티 프로젝트) NeRF 모델 훈련 튜토리얼 - 중국어](https://blog.csdn.net/aa84758481/article/details/131135823)
 
+## 수정사항
+1. python app.py를 실행하여 websocket 기반 통신 과정에서 File Not Found 에러를 방지하기 위해 app.py 코드 추가(55~57 line) + 주석 번역
+2. 파일 쓰기에 실패하는 경우를 방지하기 위해 nerf/utils.py에 코드 추가(938 line)
+3. 로컬 기반 통신 과정에서 CLI 기반 통신이 가능하도록 communicator.py 코드 작성  
+    - 사용법  
+        1) python app.py 실행
+        2) python communicator.py 실행
+        3) CLI에 메타 휴먼이 발화하도록 만들고 싶은 text 입력
+        4) data/aud_0.wav가 음성 파일, data/video/results/output_0.mp4가 결과 영상
 
 # Get Started
+: 시작하기에 앞서 만약 Ubuntu 기반 GPU Server 환경에서 Docker Container 기반으로 해당 프로젝트를 진행하신다면 ubuntu 환경에서 pyaudio를 활용하기 위해 **portaudio** 및 **requirements.txt**를 설치한 Docker image를 만드는 것을 추천드립니다.
 
 ## Installation
 
-Tested on Ubuntu 22.04, Pytorch 1.12 and CUDA 11.6，or  Pytorch 1.12 and CUDA 11.3
+원작자: Tested on Ubuntu 22.04, Pytorch 1.12 and CUDA 11.6，or  Pytorch 1.12 and CUDA 11.3  
+**새롭게 테스트 진행한 환경: Ubuntu 20.04.06, Pytorch 1.12.1 and CUDA 11.3**
 
 ```python
-git clone https://github.com/waityousea/xuniren.git
+git clone https://github.com/SangJunni/meta-human-xuniren-.git
 cd xuniren
 ```
 
 ### Install dependency
 
 ```python
-# for ubuntu, portaudio is needed for pyaudio to work.
+# for ubuntu, portaudio is needed for pyaudio to work.(Sudo 권한이 없을 경우 docker에 미리 설치하는 것을 권장합니다.)
 sudo apt install portaudio19-dev
 
 pip install -r requirements.txt
-or
-## environment.yml中的pytorch使用的1.12和cuda 11.3
+# 프로젝트에는 or로 설정했지만 가상환경 dependency 등이 존재해서 가상환경 생성을 권장합니다.
 conda env create -f environment.yml 
-## install pytorch3d
-#ubuntu/mac
+# install pytorch3d(ubuntu/mac인 경우)
 pip install "git+https://github.com/facebookresearch/pytorch3d.git"
 ```
-
-**windows安装pytorch3d**
-
-- gcc & g++ ≥ 4.9
-
-在windows中，需要安装gcc编译器，可以根据需求自行安装，例如采用MinGW
-
-以下安装步骤来自于[pytorch3d](https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md)官方, 可以根据需求进行选择。
-
-```python
-conda create -n pytorch3d python=3.9
-conda activate pytorch3d
-conda install pytorch=1.13.0 torchvision pytorch-cuda=11.6 -c pytorch -c nvidia
-conda install -c fvcore -c iopath -c conda-forge fvcore iopath
-```
-
-对于 CUB 构建时间依赖项，仅当您的 CUDA 早于 11.7 时才需要，如果您使用的是 conda，则可以继续
-
-```
-conda install -c bottler nvidiacub
-```
-
-```
-# Demos and examples
-conda install jupyter
-pip install scikit-image matplotlib imageio plotly opencv-python
-
-# Tests/Linting
-pip install black usort flake8 flake8-bugbear flake8-comprehensions
-```
-
-任何必要的补丁后，你可以去“x64 Native Tools Command Prompt for VS 2019”编译安装
-
-```
-git clone https://github.com/facebookresearch/pytorch3d.git
-cd pytorch3d
-python setup.py install
-```
-
-### Build extension 
-
-By default, we use [`load`](https://pytorch.org/docs/stable/cpp_extension.html#torch.utils.cpp_extension.load) to build the extension at runtime. However, this may be inconvenient sometimes. Therefore, we also provide the `setup.py` to build each extension:
-
-```
-# install all extension modules
-# notice: 该模块必须安装。
-# 在windows下，建议采用vs2019的x64 Native Tools Command Prompt for VS 2019命令窗口安装
-bash scripts/install_ext.sh(建议复制出来单独安装)
-```
-
-### **start(独立运行)**
-
-环境配置完成后，启动虚拟人生成器：
+### **로컬환경에서 실행하기**
+위 환경 설정을 완료한 경우 아래 코드를 통해 메타 휴먼 생성기를 시작합니다.
 
 ```python
 python app.py
 ```
-### **start（对接fay，在ubuntu 20.04及windows10下完成测试）**
-环境配置完成后，启动fay对接脚本(无须启动app.py)
-```python
-python fay_connect.py
-```
-![](img/weplay.png)
 
-扫码支助开源开发工作，凭支付单号入qq交流群
+인터페이스 입출력 관련 정보 [Websoket.md](https://github.com/waityousea/xuniren/blob/main/WebSocket.md)
 
-
-
-接口的输入与输出信息 [Websoket.md](https://github.com/waityousea/xuniren/blob/main/WebSocket.md)
-
-虚拟人生成的核心文件
+메타 휴먼 생성 관련 모델 파일
 
 ```python
-## 注意，核心文件需要单独训练
+## 모델 파일의 경우 별도 훈련이 필요.
 .
 ├── data
 │   ├── kf.json			
@@ -113,10 +66,43 @@ python fay_connect.py
 │   └── └── ngp_kg.pth
 
 ```
+### 실행 과정에서 에러가 발생한 경우
+1. ModuleNotFoundError: No module named '_raymarching_face'  
+: 실제 Raymarching 라이브러리의 설치가 이루어지지 않은 상태이기 때문에 raymarching을 pip로 install
+```
+pip install ./raymarching
 
-### Inference Speed
+```
+2. RuntimeError: Error building extension '_grid_encoder'  
+: 1번과 마찬가지로 gridencoder 라이브러리의 설치가 이루어지지 않은 상태이기 때문에 raymarching을 pip로 install
+```
+pip install ./gridencoder
+```
 
-在台式机RTX A4000或笔记本RTX 3080ti的显卡（显存16G）上进行视频推理时，1s可以推理35~43帧，假如1s视频25帧，则1s可推理约1.5s视频。
+3. RuntimeError: Error building extension '_sh_encoder'  
+: 위와 마찬가지로 shencoder 라이브러리의 설치가 이루어지지 않은 상태이기 때문에 raymarching을 pip로 install
+```
+pip install ./shencoder
+```
+
+4. RuntimeError: Error building extension _freqencoder'  
+: 위와 마찬가지로 freqencoder 라이브러리의 설치가 이루어지지 않은 상태이기 때문에 raymarching을 pip로 install
+```
+pip install ./freqencoder
+```
+5. werkzeug.routing.exceptions.WebsocketMismatch: 400 Bad Request  
+: flask 밑 관련 의존성 패키지의 버전이 맞지 않아서 발생하는 문제.   
+아래의 코드대로 라이브러리들을 특정 버전으로 설치해주면 문제해결 가능
+```
+pip install Werkzeug==1.0.1
+pip install Flask==1.1.4
+pip install markupsafe==2.0.1
+
+```
+
+### 추론 속도
+
+데스크톱 RTX A4000 or RTX 3080ti 16G에서 비디오 추론 시 35~43fps 처리가 가능. 실제 python app.py 실행시 fp16으로 2.2G 가량의 VRAM을 차지.
 
 # Acknowledgement
 
@@ -125,4 +111,4 @@ python fay_connect.py
 - The algorithm core come from  [RAD-NeRF](https://github.com/ashawkey/RAD-NeRF).
 - Usage example [Fay](https://github.com/TheRamU/Fay).
 
-学术交流可发邮件到邮箱：waityousea@126.com
+학술 교류 관련 원작자와 연락하는 곳：waityousea@126.com
